@@ -9,6 +9,12 @@ Clustering for EXAFS data from transmission X-ray microscopy (TXM)
 
 (a) shows the Gramian Angular Field (GAF) approach for encoding an EXAFS spectrum in to an image. Panel (b) illustrates an autoencoder compression framework, which consists of two major components: the encoder and the decoder. A clustering module is attached to the latent space (upper right of panel (b)). The clustering results are plotted in the two dimensional space defined by the first and the second principle components to evaluate the separation of the data points in the six clusters (lower right of panel (b)).
 
+## Data
+An EXAFS imaging data (~148Mb) can be downloaded at [here](https://figshare.com/articles/dataset/Qian_et_al_ACS_Energy_Lett_2021_-_EXAFS_Data/13625138/2).
+
+![Preview](EXAFS.png)
+
+
 ## Citation
 
 Use this bibtex to cite this repository:

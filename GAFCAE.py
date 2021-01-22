@@ -65,24 +65,6 @@ autoencoder.load_weights('conv_ae_weights.h5')
 
 from keras.engine.topology import Layer, InputSpec
 class ClusteringLayer(Layer):
-    """
-    Clustering layer converts input sample (feature) to soft label, i.e. a vector that represents the probability of the
-    sample belonging to each cluster. The probability is calculated with student's t-distribution.
-
-    # Example
-    ```
-        model.add(ClusteringLayer(n_clusters=10))
-    ```
-    # Arguments
-        n_clusters: number of clusters.
-        weights: list of Numpy array with shape `(n_clusters, n_features)` witch represents the initial cluster centers.
-        alpha: degrees of freedom parameter in Student's t-distribution. Default to 1.0.
-    # Input shape
-        2D tensor with shape: `(n_samples, n_features)`.
-    # Output shape
-        2D tensor with shape: `(n_samples, n_clusters)`.
-    """
-
     def __init__(self, n_clusters, weights=None, alpha=1.0, **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
@@ -103,16 +85,6 @@ class ClusteringLayer(Layer):
         self.built = True
 
     def call(self, inputs, **kwargs):
-        """ student t-distribution, as same as used in t-SNE algorithm.
-         Measure the similarity between embedded point z_i and centroid µ_j.
-                 q_ij = 1/(1+dist(x_i, µ_j)^2), then normalize it.
-                 q_ij can be interpreted as the probability of assigning sample i to cluster j.
-                 (i.e., a soft assignment)
-        Arguments:
-            inputs: the variable containing data, shape=(n_samples, n_features)
-        Return:
-            q: student's t-distribution, or soft labels for each sample. shape=(n_samples, n_clusters)
-        """
         q = 1.0 / (1.0 + (K.sum(K.square(K.expand_dims(inputs, axis=1) - self.clusters), axis=2) / self.alpha))
         q **= (self.alpha + 1.0) / 2.0
         q = K.transpose(K.transpose(q) / K.sum(q, axis=1)) # Make sure each sample's 10 values add up to 1.
@@ -147,7 +119,7 @@ for k in range(2, kmax+1):
 # plt.plot(range(2, kmax+1),sil,'o-')
 # plt.show
 
-n_clusters = 6
+n_clusters = 6 % obtained by seperately minimizing
 clustering_layer = ClusteringLayer(n_clusters, name='clustering')(encoder.output)
 model = Model(inputs=encoder.input, outputs=clustering_layer)
 model.compile(optimizer='adam', loss='kld')
@@ -201,14 +173,7 @@ for ite in range(int(maxiter)):
         # evaluate the clustering performance
         y_pred = q.argmax(1)
         print('Iter %d' % (ite))
-        # if y is not None:
-        #     acc = np.round(metrics.acc(y, y_pred), 5)
-        #     nmi = np.round(metrics.nmi(y, y_pred), 5)
-        #     ari = np.round(metrics.ari(y, y_pred), 5)
-        #     loss = np.round(loss, 5)
-        #     print('Iter %d: acc = %.5f, nmi = %.5f, ari = %.5f' % (ite, acc, nmi, ari), ' ; loss=', loss)
-
-        # check stop criterion
+          # check stop criterion
         delta_label = np.sum(y_pred != y_pred_last).astype(np.float32) / y_pred.shape[0]
         y_pred_last = np.copy(y_pred)
         if ite > 0 and delta_label < tol:
@@ -241,29 +206,6 @@ p = target_distribution(q)  # update the auxiliary target distribution p
 
 # evaluate the clustering performance
 y_pred = q.argmax(1)
-# if y is not None:
-#     acc = np.round(metrics.acc(y, y_pred), 5)
-#     nmi = np.round(metrics.nmi(y, y_pred), 5)
-#     ari = np.round(metrics.ari(y, y_pred), 5)
-#     loss = np.round(loss, 5)
-#     print('Acc = %.5f, nmi = %.5f, ari = %.5f' % (acc, nmi, ari), ' ; loss=', loss)
-
-#%%
-#
-# from sklearn.cluster import KMeans
-#
-# import seaborn as sns
-# import sklearn.metrics
-# import matplotlib.pyplot as plt
-# sns.set(font_scale=3)
-# confusion_matrix = sklearn.metrics.confusion_matrix(y, y_pred)
-#
-# plt.figure(figsize=(16, 14))
-# sns.heatmap(confusion_matrix, annot=True, fmt="d", annot_kws={"size": 20});
-# plt.title("Confusion matrix", fontsize=30)
-# plt.ylabel('True label', fontsize=25)
-# plt.xlabel('Clustering label', fontsize=25)
-# plt.show()
 
 import scipy.io
 scipy.io.savemat("results1000.mat", mdict={'y_pred': y_pred, 'y_pred_last': y_pred_last})
